@@ -3,6 +3,7 @@
 
 #include "../bin/version.h"
 #include "type_name.h"
+#include "variadic.h"
 
 void example_lambda() {
 	int x = 5;
@@ -88,6 +89,10 @@ struct xray
         std::cout << "[" << str << "] " << "destroy_by_move" << std::endl;
     }
 };
+inline std::ostream& operator<<(std::ostream& os, const struct xray& x)
+{
+    return os << "{xray: '" << &x << ", " << x.str << "'}";
+}
 
 void foo(const xray &)
 {
@@ -106,15 +111,26 @@ int main(int argc, char** argv) {
 	example_lambda();
 	example_tuple();
 
-	std::cout << "decltype foo call: " << foo(10) << std::endl;
+	{
+		std::cout << "decltype foo call: " << foo(10) << std::endl;
 
-	decltype(auto) i = foo2();
-	std::cout << "decltype foo2 call: " << i << " type: " << typeid(i).name() << std::endl;
+		decltype(auto) i = foo2();
+		std::cout << "decltype foo2 call: " << i << " type: " << typeid(i).name() << std::endl;
 
-	auto i3 = foo3("");
-	std::cout << "decltype foo2 call: " << i3 << " type: " << typeid(i3).name() << std::endl;
+		auto i3 = foo3("");
+		std::cout << "decltype foo3 call: " << i3 << " type: " << typeid(i3).name() << std::endl;
 
-	std::cout << "type_name of i3: " << type_name<decltype(i3)>() << std::endl;
+		std::cout << "type name (foo3): " << type_name<decltype(i3)>() << std::endl;
+		std::cout << "demangle type name (foo3): " << demangle_type_name<decltype(i3)>() << std::endl;
+
+		auto ii = 1;
+		std::cout << "auto i = 1; // " << type_name<decltype(ii)>() << std::endl;
+
+		auto &m = ii;
+		std::cout << "auto &m = i; // " << type_name<decltype(m)>() << std::endl;
+
+		std::cout << "scope end" << std::endl;
+	}
 
 	std::cout << std::endl << std::endl;
 //=================== break ===================
@@ -170,12 +186,28 @@ int main(int argc, char** argv) {
 		x = std::move(y);
 
 		std::cout << "scope end" << std::endl;
-
-		std::cout << "type name (i3): " << type_name<decltype(i3)>() << std::endl;
-		std::cout << "demangle type name (i3): " << demangle_type_name<decltype(i3)>() << std::endl;
 	}
 	std::cout << std::endl << std::endl;
 //=================== end ===================
+
+	{
+		std::cout << "~~~~~" << std::endl;
+		std::cout << "variadic template" << std::endl;
+
+		iterate(1, 2, 3);
+		iterate("a", "b", "c");
+		iterate(xray("1"), xray("2"), xray("3"));
+
+		std::cout << "~~~~~" << std::endl;
+		std::cout << "iterate 'recurse'" << std::endl;
+
+		iterate2(1, 2, 3);
+		iterate2("a", "b", "c");
+		iterate2(xray("1"), xray("2"), xray("3"));
+
+		std::cout << "scope end" << std::endl;
+	}
+	std::cout << std::endl << std::endl;
 
 	console->info("Goodbye!");
 
