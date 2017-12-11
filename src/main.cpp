@@ -43,6 +43,62 @@ auto foo3(std::string s) -> decltype(s)
 	return "42";
 }
 
+#define MOVE
+
+struct xray
+{
+	std::string str;
+    xray(const std::string &s) : str(s)
+    {
+        std::cout << "[" << str << "] " << "ctor: " << this << ' ' << __FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]" << std::endl;
+    }
+    xray(const xray& x)
+    {
+        std::cout << "copy ctor: " << this << " from " << &x << ' ' << __FUNCTION__ << std::endl;
+    }
+#ifdef MOVE
+    xray(xray&& x) noexcept
+    {
+        std::cout << "copy ctor: " << this << " from " << &x << ' ' << __FUNCTION__ << std::endl;
+        x.destroy_by_move();
+    }
+#endif
+    struct xray &operator=(const struct xray& t) {
+        std::cout << "[" << str << "] <- [" << t.str << "] " << "copy: " << this << ' ' << __FUNCTION__ << std::endl;
+        return *this;
+    }
+#ifdef MOVE
+    struct xray &operator=(struct xray&& x) noexcept {
+        std::cout << "[" << str << "] <- [" << x.str << "] " << "move: " << this << ' ' << __FUNCTION__ << std::endl;
+        str.swap(x.str);
+        std::cout << "\t swapped [" << str << "] <- [" << x.str << "] " << "move: " << this << ' ' << __FUNCTION__ << std::endl;
+        // x.destroy_by_move();
+        return *this;
+    }
+#endif
+    ~xray()
+    {
+        std::cout << "[" << str << "] " << "dtor: " << this << ' ' << __FUNCTION__ << std::endl;
+    }
+    void operator()()
+    {
+        std::cout << "[" << str << "] " << "tick" << std::endl;
+    }
+    void destroy_by_move() {
+        std::cout << "[" << str << "] " << "destroy_by_move" << std::endl;
+    }
+};
+
+void foo(const xray &)
+{
+	std::cout <<  "=ref" << std::endl;
+}
+
+void foo(xray &&)
+{
+	std::cout <<  "=rvalue" << std::endl;
+}
+
 int main(int argc, char** argv) {
 	auto console = spdlog::stdout_logger_st("console");
 	console->info("Welcome to spdlog!");
@@ -59,6 +115,67 @@ int main(int argc, char** argv) {
 	std::cout << "decltype foo2 call: " << i3 << " type: " << typeid(i3).name() << std::endl;
 
 	std::cout << "type_name of i3: " << type_name<decltype(i3)>() << std::endl;
+
+	std::cout << std::endl << std::endl;
+//=================== break ===================
+
+	{
+		xray x("x");
+		xray y("y");
+
+		x = xray("z");
+
+		std::cout << "~~~~~" << std::endl;
+
+		std::cout << "foo(x)" << std::endl;
+		foo(x);
+
+		std::cout << "foo(xray(q))" << std::endl;
+		foo(xray("q"));
+
+		std::cout << "~~~~~" << std::endl;
+
+		std::cout << "foo(xray(z))" << std::endl;
+		foo(xray("z"));
+
+		std::cout << "scope end" << std::endl;
+	}
+	std::cout << std::endl << std::endl;
+
+	{
+		std::cout << "~~~~~" << std::endl;
+
+		xray x("x");
+		xray y("y");
+
+		std::cout << "x = y" << std::endl;
+		x = y;
+
+		std::cout << "x = xray(z)" << std::endl;
+		x = xray("z");
+
+		std::cout << "scope end" << std::endl;
+	}
+	std::cout << std::endl << std::endl;
+
+	{
+		std::cout << "~~~~~" << std::endl;
+
+		xray x("x");
+		xray y("y");
+
+		std::cout << "x = static_cast<xray &&>(y)" << std::endl;
+		x = static_cast<xray &&>(y);
+		std::cout << "x = std::move(y)" << std::endl;
+		x = std::move(y);
+
+		std::cout << "scope end" << std::endl;
+
+		std::cout << "type name (i3): " << type_name<decltype(i3)>() << std::endl;
+		std::cout << "demangle type name (i3): " << demangle_type_name<decltype(i3)>() << std::endl;
+	}
+	std::cout << std::endl << std::endl;
+//=================== end ===================
 
 	console->info("Goodbye!");
 
