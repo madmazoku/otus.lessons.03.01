@@ -1,6 +1,8 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 
+#include <boost/type_index.hpp>
+
 #include "../bin/version.h"
 #include "type_name.h"
 #include "variadic.h"
@@ -66,6 +68,8 @@ struct xray
     {
         std::cout << "copy ctor: " << this << " from " << &x << ' ' << __FUNCTION__ << std::endl;
         x.destroy_by_move();
+        std::cout << "xray dem " << demangle_type_name<decltype(x)>() << std::endl;
+        std::cout << "xray " << type_name<decltype(x)>() << std::endl;
     }
 #endif
     struct xray &operator=(const struct xray& t) {
@@ -77,6 +81,8 @@ struct xray
         std::cout << "[" << str << "] <- [" << x.str << "] " << "move: " << this << ' ' << __FUNCTION__ << std::endl;
         str.swap(x.str);
         std::cout << "\t swapped [" << str << "] <- [" << x.str << "] " << "move: " << this << ' ' << __FUNCTION__ << std::endl;
+        std::cout << "\txray dem " << demangle_type_name<decltype(x)>() << std::endl;
+        std::cout << "\txray " << demangle_type_name<decltype(x)>() << std::endl;
         // x.destroy_by_move();
         return *this;
     }
@@ -223,11 +229,17 @@ int main(int argc, char** argv) {
         auto i = foo6(); //  i будет иметь тип int
         decltype(auto) i2 = foo6(); //  i2 будет иметь тип const int&&
 
+        std::cout << "type_name" << std::endl;
         std::cout << "auto i = foo6(); // " << type_name<decltype(i)>() << std::endl;
-        std::cout << "decltype(auto) i2 = foo6(); // " << type_name<decltype(i)>() << std::endl;
+        std::cout << "decltype(auto) i2 = foo6(); // " << type_name<decltype(i2)>() << std::endl;
 
+        std::cout << "demangle_type_name" << std::endl;
         std::cout << "auto i = foo6(); // " << demangle_type_name<decltype(i)>() << std::endl;
-        std::cout << "decltype(auto) i2 = foo6(); // " << demangle_type_name<decltype(i)>() << std::endl;
+        std::cout << "decltype(auto) i2 = foo6(); // " << demangle_type_name<decltype(i2)>() << std::endl;
+
+        std::cout << "boost::typeindex::type_id_with_cvr" << std::endl;
+        std::cout << "auto i = foo6(); // " << boost::typeindex::type_id_with_cvr<decltype(i)>().pretty_name() << std::endl;
+        std::cout << "decltype(auto) i2 = foo6(); // " << boost::typeindex::type_id_with_cvr<decltype(i2)>().pretty_name() << std::endl;
     }
 
     console->info("Goodbye!");
