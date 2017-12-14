@@ -13,10 +13,10 @@ std::string demangle_type_name()
 {
     typedef typename std::remove_reference<T>::type TR;
     std::unique_ptr<char, void(*)(void*)> own
-           (
-                abi::__cxa_demangle(typeid(TR).name(), nullptr, nullptr, nullptr),
-                std::free
-           );
+    (
+        abi::__cxa_demangle(typeid(TR).name(), nullptr, nullptr, nullptr),
+        std::free
+    );
     std::string r = own != nullptr ? own.get() : typeid(TR).name();
     if (std::is_const<TR>::value)
         r += " const";
@@ -41,18 +41,26 @@ public:
     constexpr static_string(const char(&a)[N]) noexcept
         : p_(a)
         , sz_(N-1)
-        {}
+    {}
 
     constexpr static_string(const char* p, std::size_t N) noexcept
         : p_(p)
         , sz_(N)
-        {}
+    {}
 
-    constexpr const char* data() const noexcept {return p_;}
-    constexpr std::size_t size() const noexcept {return sz_;}
+    constexpr const char* data() const noexcept {
+        return p_;
+    }
+    constexpr std::size_t size() const noexcept {
+        return sz_;
+    }
 
-    constexpr const_iterator begin() const noexcept {return p_;}
-    constexpr const_iterator end()   const noexcept {return p_ + sz_;}
+    constexpr const_iterator begin() const noexcept {
+        return p_;
+    }
+    constexpr const_iterator end()   const noexcept {
+        return p_ + sz_;
+    }
 
     constexpr char operator[](std::size_t n) const
     {
